@@ -64,10 +64,7 @@ fi
 #------------------------------------------------------------------------
 #- Populate hostapd.conf
 #------------------------------------------------------------------------
-grep -q "ssid=${ssid}"  /etc/hostapd/hostapd.conf 2>/dev/null
-if [[ $? -ne 0 ]]
-then
- cat > /etc/hostapd/hostapd.conf <<EOF
+cat > /etc/hostapd/hostapd.conf <<EOF
 interface=wlan0
 driver=nl80211
 ssid=${ssid}
@@ -84,7 +81,7 @@ wpa_key_mgmt=WPA-PSK
 wpa_pairwise=TKIP
 rsn_pairwise=CCMP
 EOF
-fi
+
 #------------------------------------------------------------------------
 #- Populate `/etc/default/hostapd`
 #------------------------------------------------------------------------
@@ -99,16 +96,12 @@ fi
 #------------------------------------------------------------------------
 #- Populate `/etc/dnsmasq.conf`
 #------------------------------------------------------------------------
-grep -q 'interface=wlan0' /etc/dnsmasq.conf
-if [[ $? -ne 0 ]]
-then
-  cat >> /etc/dnsmasq.conf << EOF
+cat > /etc/dnsmasq.conf << EOF
 
 # wlan access point
 interface=wlan0
 dhcp-range=${dhcprange}
 EOF
-fi
 
 #------------------------------------------------------------------------
 # setup wlan0
@@ -119,21 +112,11 @@ ip a s dev wlan0 > /dev/null 2>&1
 if [[ $? -ne 0 ]]
 then
   echo "Setting up AP: $ssid"
-  macaddr=$(cat /sys/class/net/$parent_device/address)
-  #systemctl stop hostapd
-  #systemctl stop dnsmasq
-  #systemctl stop dhcpcd
-  #ip link set ${parent_device} down
-  #iw dev ${parent_device} del
-  #iw phy phy0 interface add ${parent_device} type station
-  #iw phy phy0 interface add ap0 type __ap
-  #ip link set ap0 address $macaddr
-  #ip address add ${ipaddress} dev ap0
-  #ip link set ${parent_device} up
-  #ip link set ap0 up
   systemctl start hostapd
   systemctl restart dnsmasq
   systemctl restart dhcpcd
   systemctl enable dnsmasq
   systemctl enable hostapd
+else
+  echo "Error starting up AP $ssid. Check wlan0 is configured correctly?"
 fi
